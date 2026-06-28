@@ -37,9 +37,19 @@ jobs:
           context: ./services/auth
           file: ./services/auth/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+ 
+  deploy:
+     needs: build-and-push
+     runs-on: self-hosted
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v4
+       - name: Set image and roll out
+         run: |
+           kubectl set image deployment/auth-service auth-service=${{ env.IMAGE_NAME }}:${{ github.sha }} -n cinema-app
+           kubectl rollout status deployment/auth-service -n cinema-app

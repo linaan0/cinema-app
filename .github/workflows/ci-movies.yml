@@ -44,3 +44,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  deploy:
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set image and roll out
+        run: |
+          kubectl set image deployment/movies-service movies-service=${{ env.IMAGE_NAME }}:${{ github.sha }} -n cinema-app
+          kubectl rollout status deployment/movies-service -n cinema-app
