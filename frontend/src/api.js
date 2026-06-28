@@ -65,6 +65,7 @@ export const moviesApi = {
 }
 
 export const bookingsApi = {
+    baseUrl: import.meta.env.VITE_API_BASE || '',
     screenings: (movieId) =>
         request(`/api/screenings${movieId ? `?movieId=${movieId}` : ''}`),
 

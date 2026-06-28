@@ -1,12 +1,3 @@
-// Minimal SignalR client over raw WebSockets, just enough to:
-//  - negotiate + connect to a Hub
-//  - invoke a hub method ("JoinScreening" / "LeaveScreening")
-//  - listen for a server-pushed event ("SeatStatusChanged")
-//
-// We hand-roll this instead of pulling in @microsoft/signalr to keep the
-// frontend dependency-free for a uni project. It speaks the same
-// text-based JSON Hub Protocol that the real client uses, just without
-// the automatic-reconnect bells and whistles.
 import { getToken } from './api'
 
 const RECORD_SEPARATOR = '\u001e'
@@ -17,14 +8,22 @@ function encode(message) {
 
 function decodeAll(raw) {
   return raw
-    .split(RECORD_SEPARATOR)
-    .filter(Boolean)
-    .map((chunk) => JSON.parse(chunk))
+      .split(RECORD_SEPARATOR)
+      .filter(Boolean)
+      .map((chunk) => JSON.parse(chunk))
 }
 
 export function connectSeatHub(baseUrl, { onSeatStatusChanged, onOpen, onClose } = {}) {
   const token = getToken()
-  const wsBase = baseUrl.replace(/^http/, 'ws')
+  
+  let wsBase
+  if (!baseUrl) {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    wsBase = `${proto}://${window.location.host}`
+  } else {
+    wsBase = baseUrl.replace(/^http/, 'ws')
+  }
+
   const url = `${wsBase}/hubs/seat-availability?access_token=${encodeURIComponent(token || '')}`
 
   let socket = null
@@ -57,11 +56,9 @@ export function connectSeatHub(baseUrl, { onSeatStatusChanged, onOpen, onClose }
           onOpen?.()
           continue
         }
-        // type 1 = Invocation (server calling a client method)
         if (msg.type === 1 && msg.target === 'SeatStatusChanged') {
           onSeatStatusChanged?.(msg.arguments[0])
         }
-        // type 6 = Ping - no action needed, just keeps the connection alive
       }
     }
 
@@ -69,7 +66,6 @@ export function connectSeatHub(baseUrl, { onSeatStatusChanged, onOpen, onClose }
       handshakeDone = false
       onClose?.()
       if (!closedByUser) {
-        // simple reconnect after a short delay
         setTimeout(open, 3000)
       }
     }
