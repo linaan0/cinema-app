@@ -1,0 +1,66 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cinema-app-ingress
+  namespace: cinema-app
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8080
+          - path: /api/movies
+            pathType: Prefix
+            backend:
+              service:
+                name: movies-service
+                port:
+                  number: 8080
+          - path: /api/screenings
+            pathType: Prefix
+            backend:
+              service:
+                name: bookings-service
+                port:
+                  number: 8080
+          - path: /api/bookings
+            pathType: Prefix
+            backend:
+              service:
+                name: bookings-service
+                port:
+                  number: 8080
+          - path: /hubs
+            pathType: Prefix
+            backend:
+              service:
+                name: bookings-service
+                port:
+                  number: 8080
+          - path: /api/pricing
+            pathType: Prefix
+            backend:
+              service:
+                name: pricing-service
+                port:
+                  number: 8080
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notifications-service
+                port:
+                  number: 8080

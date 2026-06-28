@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+  namespace: cinema-app
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  MongoDb__ConnectionString: "mongodb://mongodb-0.mongodb:27017,mongodb-1.mongodb:27017,mongodb-2.mongodb:27017/?replicaSet=rs0&readPreference=primaryPreferred"
+  MongoDb__DatabaseName: "auth_db"
