@@ -10,4 +10,5 @@ obj/
 # Env
 .env
 
+# OS
 .DS_Store
