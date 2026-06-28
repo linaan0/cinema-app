@@ -51,5 +51,5 @@ jobs:
         uses: actions/checkout@v4
       - name: Set image and roll out
         run: |
-          kubectl set image deployment/frontend-service frontend-service=${{ env.IMAGE_NAME }}:${{ github.sha }} -n cinema-app
+          kubectl set image deployment/frontend frontend=${{ env.IMAGE_NAME }}:${{ github.sha }} -n cinema-app
           kubectl rollout status deployment/frontend-service -n cinema-app
