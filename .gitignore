@@ -1,0 +1,13 @@
+# .NET
+bin/
+obj/
+*.user
+
+# IDE
+.vs/
+.idea/
+
+# Env
+.env
+
+.DS_Store

@@ -1,0 +1,134 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: cinema-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cinema-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: cinema-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI (guest/guest)
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    container_name: cinema-auth
+    ports:
+      - "8081:8080"
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-cinema-app}
+      - Jwt__Audience=${JWT_AUDIENCE:-cinema-app-clients}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  movies-service:
+    build:
+      context: ./services/movies
+      dockerfile: Dockerfile
+    container_name: cinema-movies
+    ports:
+      - "8082:8080"
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-cinema-app}
+      - Jwt__Audience=${JWT_AUDIENCE:-cinema-app-clients}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  bookings-service:
+    build:
+      context: ./services/bookings
+      dockerfile: Dockerfile
+    container_name: cinema-bookings
+    ports:
+      - "8083:8080"
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-cinema-app}
+      - Jwt__Audience=${JWT_AUDIENCE:-cinema-app-clients}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  pricing-service:
+    build:
+      context: ./services/pricing
+      dockerfile: Dockerfile
+    container_name: cinema-pricing
+    ports:
+      - "8084:8080"
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-cinema-app}
+      - Jwt__Audience=${JWT_AUDIENCE:-cinema-app-clients}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  notifications-service:
+    build:
+      context: ./services/notifications
+      dockerfile: Dockerfile
+    container_name: cinema-notifications
+    ports:
+      - "8085:8080"
+    environment:
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER:-cinema-app}
+      - Jwt__Audience=${JWT_AUDIENCE:-cinema-app-clients}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinema-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - auth-service
+      - movies-service
+      - bookings-service
+      - pricing-service
+      - notifications-service
+
+volumes:
+  mongo-data:
