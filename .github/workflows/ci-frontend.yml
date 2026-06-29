@@ -38,6 +38,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            VITE_API_BASE=${{ secrets.VITE_API_BASE }}
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
