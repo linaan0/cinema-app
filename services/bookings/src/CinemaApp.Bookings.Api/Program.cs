@@ -89,11 +89,16 @@ builder.Services.AddSwaggerGen();
 // SignalR with credentials requires a specific-origin (not wildcard) CORS policy.
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+
+    options.AddPolicy("AllowCredentials", policy =>
         policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 builder.Services.AddHealthChecks();
@@ -106,7 +111,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors();
+app.MapHub<SeatAvailabilityHub>("/hubs/seat-availability")
+    .RequireCors("AllowCredentials");
 app.UseAuthentication();
 app.UseAuthorization();
 
